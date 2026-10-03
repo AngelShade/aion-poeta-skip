@@ -1,105 +1,89 @@
-![Aion 4.8 Banner](https://github.com/beyond-aion/aion-server/assets/1169307/494205be-399a-4e2e-8435-1f0774d92262)
-<div align="center">
+# Aion 4.8 Poeta Skip
 
-  ![](https://img.shields.io/badge/dynamic/xml?url=https%3A%2F%2Fgithub.com%2Fbeyond-aion%2Faion-server%2Fraw%2F4.8%2Fpom.xml&query=%2F%2A%5Blocal-name%28%29%3D%22project%22%5D%2F%2A%5Blocal-name%28%29%3D%22properties%22%5D%2F%2A%5Blocal-name%28%29%3D%22maven.compiler.release%22%5D%2Ftext%28%29&label=Java%20version)
-  [![](https://img.shields.io/github/contributors-anon/beyond-aion/aion-server)](https://gisthost.github.io/?ce9729bcacaac31f78771b8521512d0a&repo=beyond-aion%2Faion-server&title=Beyond%20Aion%20Server%20Contributors)
-  ![](https://img.shields.io/github/repo-size/beyond-aion/aion-server)
+An optional full-screen journey choice for the English Aion 4.8 NA 64-bit client and Beyond Aion emulator. Choose **Play Poeta** to keep the original story, or **Ascend to Sanctum** to choose an advanced class, start at level 10, complete the eligible Poeta quests and receive their items through mail.
 
-</div>
+The Sanctum ceremony stays playable: the skip passes Pernos and starts **A Ceremony in Sanctum** with **Leah**. Ceremony rewards are earned normally at its final turn-in. **Dispatch to Verteron** also starts for the chosen class. Existing completed quests never award another bundle.
 
-# Aion 4.8 Server Emulator
+## Download
 
-This is the server for the MMORPG *Aion: The Tower of Eternity* that we host for our players.  
-Our server emulator is intended to be faithful to the original experience of the official servers of the time, but a few custom features have also been implemented to meet the needs of our community.  
-You can read more about it here:
-<details>
-<summary><b>Motivation and features of this server emulator (click to show)</b></summary>
+Use **Code > Download ZIP** on [GitHub](https://github.com/AngelShade/aion-poeta-skip), or:
 
-### Motivation
-In the early years of the game, from 2009 onwards, there were larger and more organized development teams. When we started, in 2015, those days were long gone.  
-The few people with extensive knowledge about the different Aion-Emu[^1] forks know this already. Aion server emulators are barely functional: Many systems have been left unfinished, some have design problems, and incomplete or incorrect template data is the rule, not the exception. What seems to work at first breaks down when you introduce trivial variables such as players playing the game or running the server for more than a few
-hours.  
-
-We wanted to change this and create an emulator this wonderful game deserves.  
-The base for our project was Aion-Lightning's server for Aion version 4.7.5, which was considered the best emulator at the time. Unfortunately, while it was less buggy than emulators from other groups, it turned out to be in a similarly terrible state.  
-Once we opened the server to our community, many more core issues came to light, all of which led to our decision to prioritize bug fixes and optimizations over features or version updates. So we just updated once, to version 4.8 (again with the help of Aion-Lightning's work), and stuck to our plan.  
-
-### Highlights
-The following is a very incomplete list of some notable things we have worked on:
-
-#### Custom features
-- PvPvE map with increased AP rates and boss spawns
-- Solo instance "Eternal Challenge" with a boss using the same skills and tactics like you, based on a deep learning AI
-- Customizations to drop lists, QoL improvements, player commands and various PvP and PvE rewards you can read more about [here](https://beyond-aion.com/page/features)
-
-#### Fixes and enhancements
-- Fixed geo[^2] related issues like wrong or missing obstacles, incorrect bound calculations, terrain checks, doors, shields, environmental effects, etc.
-- Fixed map kicks and other unintended positioning from various skills, some even client-induced (now worked around by the server)
-- Implemented missing instances and reworked some
-- Fixed hundreds of quests
-- Added thousands of missing drops and spawns
-- Fixed drop rate calculations and improved the global drop system (removed npc_drop.dat support)
-- Fixed duplicate or unintentionally invisible spawns, temporary spawns and added support for temporary spawns in instances and events
-- Fixed the event engine and added new features like automatic buffs or config overrides
-- Removed, merged or reworked many chat commands, implemented descriptions, common error handling and a permission aware `.help` command
-- Implemented true invisibility against anti hide hacks
-- Fixed motion validation to combat no-animation hacks
-- Fixed many stat and skill related issues with players and NPCs
-- Implemented more AI handler events and controls like queueing of skills
-- Fixed countless core bugs of various severities, like wrong chance calculations, login problems or even client crashes
-- Fixed memory leaks, concurrency related issues and more, so the server no longer needs to be restarted every few hours (runs nicely for months now)
-- Development related:
-  - Simplified configuration and added support for more data types, including lists and maps
-  - Logging improvements: Added support for Discord webhooks and revised all error logging (no missing stack traces anymore or meaningless messages)
-  - Optimized startup time and implemented class file caching for even faster startup if handlers haven't been modified since the last start
-  - Continuous optimizations for a more light-weight and more efficient server (removal of unnecessary code or dependencies, refactoring, etc.)
-  - Regular Java and dependency updates for the latest improvements and new language features
-
-### Outlook
-
-Fast-forward to today and there are still many unfinished tasks, bugs and ideas for improvements. Too many to even try listing them. A project of this size will never be finished by a few people developing it in their spare time.  
-Which is fine, because we enjoy working on it.
-
-</details>
-
-**TL;DR**: A lot of work has been put into improving this emulator. Not only for our players, but also for a better experience when developing.
-
-> [!TIP]  
-> If you have questions about [contributing](https://github.com/beyond-aion/aion-server/blob/HEAD/.github/CONTRIBUTING.md) or if you are interested in technical discussions about Aion and its server development, you can join our **development-focused Discord**: [![Discord Join Link](https://img.shields.io/badge/Discord-5865f2?logo=discord&logoColor=white)](https://beyond-aion.com/dev-talk)  
-> 
-> **Please note that we do not provide any support related to hosting your own server, but you can ask the community for help in [Discussions > Q&A](https://github.com/beyond-aion/aion-server/discussions/categories/q-a)**
-
-## Building
-This project uses [Maven](https://maven.apache.org/what-is-maven.html) to manage dependencies. The game server, login server and chat server can be
-built using `mvn package` from the root directory.  
-The resulting zip files in each server's target folder can be deployed on any system with a suitable JDK and access to a MySQL (or MariaDB) server.  
-
-## Configuration
-### Server setup
-The servers can be run with the default config after initializing the databases with the *.sql file in each server's sql folder (default DB names
-and users can be found in `config/network/database.properties`).  
-To whitelist the game server connection to the login server, enter its ID, IP mask and password in the `gameserver` table of the login server
-database.  
-If you want to change some configs, it's recommended to create the files `config/mycs.properties` (chat server), `config/mygs.properties` (game 
-server) and `config/myls.properties` (login server) and put all your custom properties in there. These take precedence over the standard 
-*.properties files and will not be modified when updating the server.  
-
-### Game client setup
-You can download the game client for this version from [here](https://archive.org/download/aion-4.8-na/Aion%204.8%20NA.7z), or via [torrent](https://archive.org/download/aion-4.8-na/aion-4.8-na_archive.torrent).  
-As the game blocks connections to unofficial servers and does not run properly on Windows 10 or later, it needs to be patched. This can be done by copying
-this [version.dll](https://github.com/beyond-aion/aion-version-dll/releases/latest) into the bin32 and bin64 folders of the game client.  
-To run the game, create a file called `start.bat` in the game's root directory with the following content:
-```batch
-start "" "bin64\aion.bin" -ip:127.0.0.1 -port:2106 -loginex
+```powershell
+git clone https://github.com/AngelShade/aion-poeta-skip.git
 ```
 
-## Developing
-Import the root directory as a Maven project. If your IDE does not support [EditorConfig](https://editorconfig.org/#pre-installed) natively, install a
-plugin for it to ensure a consistent coding style.  
-To start a server, create a run/debug configuration with the `*Server` class as the main class. The chat server for example starts from
-`ChatServer.java`. The working directory needs to be set to the module directory (`$MODULE_WORKING_DIR$` in IntelliJ).   
-If your IDE compiles very slowly, the compiler likely needs more memory. The option is called "Build process heap size" in IntelliJ.
+This is a complete server source repository based on [Beyond Aion](https://github.com/beyond-aion/aion-server), commit `267ce6033f39e8d297d2ac2657e5a6e930723578`. The upstream history, [original README](docs/UPSTREAM_README.md) and GPL-3.0 license are retained. The Poeta service has its own local HTTP listener; Central Market, Wardrobe and the private Cash Shop are not required.
 
+No original client DLLs, signed client archives, extracted client artwork, compiled server JARs, database credentials or player data are distributed. The client builder compiles the native bridge locally and creates background images from the recipient's own loading textures. It adds only the Journey menu; enlarged Inventory, Warehouse, Graphics and other private menus are not installed.
 
-[^1]: [Aion-Emu](https://web.archive.org/web/20100128222712/http://aion-emu.com/) was the first server development project for the game and laid the foundation for all the popular server emulators known today.  
-[^2]: Geo or geo data is the common term for collision data parsed from the game client. Collision data for this server is created with our [GeoBuilder](https://github.com/beyond-aion/aion-geobuilder).  
+## Requirements and supported setup
+
+- JDK 25, Maven and MySQL/MariaDB for this server.
+- Original English **Aion 4.8 NA 64-bit client**. Game.dll must have SHA-256 `5334cf2164468678e45fe1a5decf58a0fbc4fd7f22cfdcbb87d28edce8d2c11c`. CrySystem and Awesomium are also version checked. Other builds and already modified Game.dll files are refused by this standalone builder.
+- Python 3.12, Pillow (`python -m pip install Pillow`) and Visual Studio 2022 C++ Build Tools with the Windows SDK for client preparation.
+- Client and GameServer on the **same computer**: the supplied authenticated route is `http://127.0.0.1:8091/journey`. Remote hosting requires coordinated native URL validation, listener and transport changes; changing only the Lua URL is insufficient.
+- Port 8091 must be free. If combining this with another mod using that port, register `/journey` on its existing HTTP listener and reuse its authentication integration; do not start two listeners on the same address. See [integration notes](docs/INTEGRATION.md).
+
+## Prepare the client and artwork
+
+From the downloaded repository root:
+
+```powershell
+python client-mods/poeta-journey/build_package.py --client-path 'D:\Games\Aion 4.8 NA' --java 'C:\Program Files\Java\jdk-25\bin\java.exe' --output 'D:\Poeta-Staged'
+```
+
+Choose the **game root containing bin64, Data, L10N and Plugin**, not bin64 itself. The output must be a new directory outside the client. Preparation leaves the client untouched and creates:
+
+- `D:\Poeta-Staged`: ten hash-checked client replacements and `manifest.json`.
+- `D:\Poeta-Staged-server-media`: `poeta.jpg` and `sanctum.jpg`, generated from `Textures/loading/loading_lf1.dds` and `loading_lc1.dds` in your client.
+
+Review the manifest. Fully exit Aion before installing:
+
+```powershell
+./client-mods/poeta-journey/Install.ps1 -ClientPath 'D:\Games\Aion 4.8 NA' -PreparedPath 'D:\Poeta-Staged'
+```
+
+The installer verifies original and staged hashes, backs up every replacement and prints the backup path. It preserves the original model public key and isolates addon archive signatures so stock pet validation and the menu can work together. Existing item and inventory/UI archives are preserved. The package belongs to the exact client root used to prepare it.
+
+## Build and deploy the server
+
+1. Build from this repository root:
+
+   ```powershell
+   mvn -pl game-server -am clean package '-Dassembly.skipAssembly=true' '-Dmaven.test.skip=true'
+   ```
+
+2. Back up the database and your current server JAR/configuration. Build your own JAR instead of copying a private server's compiled binary.
+3. Log players out and stop GameServer normally so its save completes. Replace `libs/game-server-4.8-SNAPSHOT.jar` in the **active GameServer deployment** with `game-server/target/game-server-4.8-SNAPSHOT.jar`.
+4. Copy `game-server/config/journey` to the active server's `config/journey`. Copy the two generated JPG files from `Poeta-Staged-server-media` into its `config/journey/media`.
+5. Deploy the modified `game-server/data/handlers/quest/poeta/_1000Prologue.java` into the matching active `data/handlers/quest/poeta` folder. Deploy the matching server data/configuration when building a fresh server. Customized emulators should merge the listed integration changes, preserving their own unrelated work.
+6. Add these overrides to the active `config/mygs.properties`:
+
+   ```properties
+   gameserver.poeta.journey.enable = true
+   gameserver.simple.secondclass.enable = false
+   ```
+
+7. Start GameServer and check **Poeta journey ready: 41 quests** and **Poeta journey listening at http://127.0.0.1:8091/journey**. Start the matching modified 64-bit client and log in.
+
+The feature defaults to disabled until the operator installs both parts. Startup creates its InnoDB decision table and validates the persistence tables and reward templates. An unauthenticated `/journey/state` returning **403** is expected.
+
+## Player behavior
+
+New Elyos starting-class characters in Poeta, level 1-9, receive the automatic choice. Play saves their preference and starts the original prologue. Skip requires a compatible advanced class and explicit final confirmation while standing safely. It completes 41 eligible Poeta/Ascension quests, mails all fixed and alternative item rewards for the skipped quests, includes quest Kinah, titles and quest cube expansion, and binds/teleports to Sanctum.
+
+The reward bundle includes other class alternatives; identical alternatives within one quest are awarded once. The skip grants level 10 rather than adding scaled XP for each quest. Restricted, event, unused and repeatable quests are excluded. Previously ascended or transferred characters cannot claim the skip. A full mailbox rejects the whole transaction, and repeated requests cannot duplicate rewards.
+
+The welcome screen survives map entry and stays until **Enter the world** is clicked. Reopen through **Additional Functions > Choose Your Journey** or `/journey`. Complete the ceremony in Sanctum and continue to Verteron through Polyidus. Legacy receipts that already mailed ceremony rewards retain their protection against receiving them twice.
+
+## Verification and rollback
+
+See [validation](docs/VALIDATION.md) for tested behavior and remaining recipient checks. Test Play and Skip on separate new Elyos characters, actual button hit areas at your resolution/UI scale, completed quest history, Leah's ceremony step, rewards/mail, persistent welcome dismissal, relogin, a summoned pet and Additional Functions.
+
+To restore the client, fully exit Aion and use the exact backup printed by installation:
+
+```powershell
+./client-mods/poeta-journey/Restore.ps1 -ClientPath 'D:\Games\Aion 4.8 NA' -BackupPath 'D:\Games\Aion 4.8 NA\TransmogMenu-backups\signed-DATE-ID'
+```
+
+To disable the server feature, set `gameserver.poeta.journey.enable = false` and restart normally. Keep `poeta_journey`: its receipts prevent duplicate claims. Restoring client files or disabling the feature does not reverse awarded levels, quests, items or mail. Restoring a database snapshot reverses subsequent gameplay too; use a consistent backup and reconcile rewards first.

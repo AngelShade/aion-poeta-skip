@@ -87,6 +87,17 @@ public final class QuestService {
 		if (template.getCategory() == QuestCategory.MISSION && qs.getCompleteCount() != 0)
 			return false; // prevent repeatable reward because of wrong quest handling
 
+		// Legacy Poeta skips mailed the ceremony alternatives already. New skips
+		// exclude 1007 from their receipt and receive the normal turn-in rewards.
+		if (id == 1007 && PoetaJourneyService.ceremonyRewardsMailed(player)) {
+			qs.setStatus(QuestStatus.COMPLETE);
+			qs.setQuestVar(0);
+			PacketSendUtility.sendPacket(player,new SM_QUEST_ACTION(ActionType.UPDATE,qs));
+			QuestEngine.getInstance().onQuestCompleted(player,id);
+			player.getController().updateNearbyQuests();
+			return true;
+		}
+
 		validateAndFixRewardGroup(qs, id);
 		List<QuestItems> questItems = new ArrayList<>();
 		if (template.getExtendedRewards() != null && qs.getCompleteCount() == template.getRewardRepeatCount() - 1) { // additional reward for the Xth time

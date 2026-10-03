@@ -15,3 +15,16 @@ login-server/target/
 **/*.iml
 **/.classpath
 **/.project
+**/__pycache__/
+*.pyc
+*.log
+*.zip
+*.rar
+/target/
+*.dll
+*.pak
+*.index
+*.sig
+Addon.key
+Pub.key
+**/journey/media/*.jpg

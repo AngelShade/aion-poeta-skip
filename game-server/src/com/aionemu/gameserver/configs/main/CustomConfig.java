@@ -68,6 +68,9 @@ public class CustomConfig {
 	@Property(key = "gameserver.simple.secondclass.enable", defaultValue = "false")
 	public static boolean ENABLE_SIMPLE_2NDCLASS;
 
+	@Property(key = "gameserver.poeta.journey.enable", defaultValue = "false")
+	public static boolean ENABLE_POETA_JOURNEY;
+
 	/**
 	 * Disable chain trigger rate (chain skill with 100% success)
 	 */

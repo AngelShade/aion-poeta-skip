@@ -85,6 +85,8 @@ public class QuestTemplate implements L10n {
 	private int id;
 	@XmlAttribute(name = "name")
 	private String name;
+	@XmlAttribute(name = "quest_zone")
+	private String questZone;
 	@XmlAttribute(name = "nameId")
 	private int nameId;
 	@XmlAttribute(name = "minlevel_permitted")
@@ -240,6 +242,8 @@ public class QuestTemplate implements L10n {
 	public int getId() {
 		return id;
 	}
+
+	public String getQuestZone() { return questZone; }
 
 	public String getName() {
 		return name;

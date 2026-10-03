@@ -73,6 +73,7 @@ public class ShutdownHook extends Thread {
 			}
 		}
 
+		com.aionemu.gameserver.services.PoetaJourneyHttpService.stop();
 		GameServer.shutdownNioServer(); // shuts down network, disconnects cs/ls/all players and schedules leaveWorld
 		PlayerLeaveWorldService.processPendingLeaveWorldTasks();
 

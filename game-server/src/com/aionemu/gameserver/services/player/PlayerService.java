@@ -1,5 +1,8 @@
 package com.aionemu.gameserver.services.player;
 
+import com.aionemu.gameserver.services.PoetaJourneyService;
+import com.aionemu.gameserver.services.AccountService;
+
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -100,6 +103,8 @@ public class PlayerService {
 	}
 
 	public static Player getPlayer(int playerObjId, Account account) {
+		if (PoetaJourneyService.recoverCommittedChoice(playerObjId))
+			account.addPlayerAccountData(AccountService.loadPlayerAccountData(playerObjId));
 		// Player common data and appearance should be already loaded in account
 		PlayerAccountData playerAccountData = account.getPlayerAccountData(playerObjId);
 		PlayerCommonData pcd = playerAccountData.getPlayerCommonData();

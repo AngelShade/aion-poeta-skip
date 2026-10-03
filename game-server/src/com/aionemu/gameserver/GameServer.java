@@ -179,6 +179,9 @@ public class GameServer {
 		CustomInstanceService.getInstance();
 		DataManager.waitForValidationToFinishAndShutdownOnFail();
 
+		try { PoetaJourneyHttpService.start(); }
+		catch (Exception e) { throw new IllegalStateException("Could not start Poeta journey",e); }
+
 		System.gc();
 
 		VersionInfo.logAll(versionInfo, GSConfig.TIME_ZONE_ID);

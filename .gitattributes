@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Preserve the original upstream README's intentional Markdown hard breaks.
+docs/UPSTREAM_README.md whitespace=-blank-at-eol
