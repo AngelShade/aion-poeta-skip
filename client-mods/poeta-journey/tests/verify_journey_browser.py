@@ -19,16 +19,21 @@ def main():
     state = dict(eligible=True, prompt=True, name='New Daeva', quests=41, request='fixture-only',
                  welcome=False, ceremonyRewardsMailed=False, decision='', classes=[dict(id='GLADIATOR', name='Gladiator'), dict(id='TEMPLAR', name='Templar')])
     posts = []
+    state_reads = []
+    failures = dict(login=0, stall=0)
 
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *unused):
             pass
 
-        def send(self, data, content='application/json'):
-            self.send_response(200)
+        def send(self, data, content='application/json', status=200):
+            self.send_response(status)
             self.send_header('Content-Type', content)
             self.end_headers()
-            self.wfile.write(data if isinstance(data, bytes) else data.encode())
+            try:
+                self.wfile.write(data if isinstance(data, bytes) else data.encode())
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                pass  # A stalled state request is intentionally cancelled by the browser.
 
         def do_GET(self):
             path = urlparse(self.path).path
@@ -40,6 +45,14 @@ def main():
                 file = media / path.rsplit('/', 1)[1]
                 self.send(file.read_bytes(), {'.css':'text/css', '.js':'application/javascript', '.jpg':'image/jpeg'}[file.suffix])
             elif path == '/journey/state':
+                state_reads.append(time.monotonic())
+                if failures['login']:
+                    failures['login'] -= 1
+                    self.send(json.dumps(dict(error='Log in to choose your journey.')), status=403)
+                    return
+                if failures['stall']:
+                    failures['stall'] -= 1
+                    time.sleep(4)
                 self.send(json.dumps(state))
             else:
                 self.send_error(404)
@@ -169,6 +182,46 @@ def main():
             assert posts[-1]['choice'] == ['play'] and js(view, 'visibility.join()') == '1,0'
             print(f'PASS actual Aion WebKit {starter} {width}x{height}: mouse clicks hit visible buttons, class confirmation, map-reload welcome persists until acknowledgement, original-story close')
             destroy(view); views.remove(view)
+        state.update(eligible=True, prompt=True, decision='', welcome=False)
+        for failure in ('login', 'stall'):
+            failures[failure] = 2 if failure == 'login' else 1
+            before = len(state_reads)
+            view = create(1024, 768, False); views.append(view)
+            s = make(url, len(url)); load(view, s, empty, empty, empty); free(s)
+            until = time.monotonic() + 9
+            while time.monotonic() < until:
+                pump(.1)
+                if js(view, 'window.visibility&&visibility.join()') == '1':
+                    break
+            else:
+                raise AssertionError('Journey did not recover from '+failure)
+            elapsed = time.monotonic() - state_reads[before]
+            assert elapsed < (2 if failure == 'login' else 3.8), elapsed
+            pump(1.5)
+            assert len(state_reads)-before == (3 if failure == 'login' else 2), 'Overlapping retry requests'
+            assert js(view, 'visibility.join()') == '1', 'Late response opened the prompt twice'
+            print(f'PASS actual Aion WebKit {failure}: prompt opened in {elapsed:.2f}s, late callbacks ignored')
+            destroy(view); views.remove(view)
+        failures['stall'] = 20
+        before = len(state_reads)
+        before_posts = len(posts)
+        view = create(1024, 768, False); views.append(view)
+        s = make(url, len(url)); load(view, s, empty, empty, empty); free(s)
+        until = time.monotonic() + 16
+        while time.monotonic() < until:
+            pump(.1)
+            if 'Close it and reopen' in js(view, "document.getElementById('notice').textContent"):
+                break
+        else:
+            raise AssertionError('Stalled login did not reach a bounded error')
+        elapsed = time.monotonic() - state_reads[before]
+        assert elapsed < 13.5 and len(state_reads)-before <= 5, (elapsed, len(state_reads)-before)
+        reads = len(state_reads); pump(1)
+        assert len(state_reads) == reads and len(posts) == before_posts
+        assert js(view, 'visibility.join()') == '', 'Failure prompted an unauthenticated character'
+        print(f'PASS actual Aion WebKit persistent stall: stopped in {elapsed:.2f}s, no overlapping requests or actions')
+        destroy(view); views.remove(view)
+        failures['stall'] = 0
         state.update(eligible=False, prompt=False, decision='SKIP',welcome=False)
         view = create(1024, 768, False); views.append(view)
         s = make(url, len(url)); load(view, s, empty, empty, empty); free(s); pump(1)

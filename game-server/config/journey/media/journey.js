@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var state=null,selected='',busy=false,attempt=0;
+var state=null,selected='',busy=false,loadStarted=new Date().getTime();
 function el(id){return document.getElementById(id);}
 function hidden(id,value){if(value)el(id).setAttribute('hidden','hidden');else el(id).removeAttribute('hidden');}
 function nativeControl(show){if(window.AionObject&&typeof window.AionObject.JourneyVisibility==='function')window.AionObject.JourneyVisibility(show?1:0);}
@@ -18,21 +18,28 @@ function presentation(data){
  el('starter-art').style.backgroundImage="url('/journey/media/"+j.starterArt+".jpg')";
  el('capital-art').style.backgroundImage="url('/journey/media/"+j.capitalArt+".jpg')";
 }
-function request(method,path,fields,done){
- var xhr=new XMLHttpRequest();xhr.open(method,path,true);xhr.timeout=20000;
+function request(method,path,fields,done,timeout){
+ var xhr=new XMLHttpRequest(),settled=false,timer;timeout=timeout||20000;
+ function finish(status,data){if(settled)return;settled=true;clearTimeout(timer);done(status,data);}
+ function expired(){if(settled)return;finish(0,{error:'The request timed out. Reopen the menu to check your saved choice.'});xhr.abort();}
+ xhr.open(method,path,true);xhr.timeout=timeout;
  if(method==='POST')xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
- xhr.onreadystatechange=function(){if(xhr.readyState!==4)return;var data;try{data=JSON.parse(xhr.responseText);}catch(e){data={error:'The journey menu could not connect. Reopen it to try again.'};}done(xhr.status,data);};
- xhr.ontimeout=function(){done(0,{error:'The request timed out. Reopen the menu to check your saved choice.'});};
+ xhr.onreadystatechange=function(){if(xhr.readyState!==4||settled)return;var data;try{data=JSON.parse(xhr.responseText);}catch(e){data={error:'The journey menu could not connect. Reopen it to try again.'};}finish(xhr.status,data);};
+ xhr.ontimeout=expired;
+ // Older client WebKit builds can ignore XMLHttpRequest.timeout.
+ timer=setTimeout(expired,timeout);
  xhr.send(method==='POST'?encode(fields):null);
 }
 function load(){
+ var remaining=12000-(new Date().getTime()-loadStarted);
+ if(remaining<=0){notice('The journey menu could not connect. Close it and reopen Choose Your Journey.');return;}
  request('GET','/journey/state?session_id='+encodeURIComponent(token()),{},function(status,data){
-  if(status!==200){if(++attempt<8){setTimeout(load,1500);return;}notice(data.error);return;}
+  if(status!==200){if(new Date().getTime()-loadStarted<12000){setTimeout(load,300);return;}notice('The journey menu could not connect. Close it and reopen Choose Your Journey.');return;}
   state=data;presentation(data);var j=data.journey;
   if(!data.eligible){hidden('paths',true);hidden('complete',false);el('complete-title').textContent=data.welcome?'Welcome to '+j.capital:'Your journey is underway';el('receipt').textContent=data.decision==='SKIP'?'Your '+j.starter+' skip has already been applied. Collect your skipped quest rewards from the mailbox. Speak to '+j.guide+' for A Ceremony in '+j.capital+'. '+(data.ceremonyRewardsMailed?'Its rewards were already included in your earlier mail bundle.':'Complete the ceremony to earn its rewards.')+' Then see '+j.travelGuide+' for Dispatch to '+j.onward+'.':'This choice is available to starting-class characters in '+j.starter+', before Ascension.';if(data.welcome)nativeControl(true);return;}
   el('greeting').textContent=data.name+', how will your story begin?';
   if(data.prompt)nativeControl(true);
- });
+ },Math.min(2500,remaining));
 }
 function choose(choice){
  if(busy||!state)return;busy=true;el('play').disabled=el('confirm').disabled=true;notice('Preparing your journeyâ€¦');
