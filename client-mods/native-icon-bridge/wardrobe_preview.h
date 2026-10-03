@@ -30,7 +30,7 @@ std::array<uint64_t,3> modal_flags{};
 bool modal_hidden=false;
 const char* last_failure=nullptr;
 bool fail(const char* reason){if(last_failure!=reason){log(reason);last_failure=reason;}return false;}
-struct State { bool active=true; int completed=0; bool ready=false; bool model_visible=true; };
+struct State { bool active=true; int completed=0; bool ready=false; bool model_visible=true; bool journey_key_requested=false; };
 struct Command {
     std::shared_ptr<State> state;
     int request=0,pressed=0;
@@ -225,7 +225,11 @@ void tick(){
         {std::lock_guard<std::mutex> lock(queue_mutex);if(!command.state->active)continue;}
         bool ready=false;
         try{
-            if(command.control=="journey-visible"){
+            if(command.control=="journey-key"){
+                auto g=game();uint64_t key[2]{};if(g)std::memcpy(key,g+0x130c8f0,sizeof(key));
+                if(g && !(key[0]|key[1]))reinterpret_cast<void(__cdecl*)()>(g+0x3321c0)();
+            }
+            else if(command.control=="journey-visible"){
                 if(Ptr dialog=journey_dialog()){flag(dialog,1,command.pressed!=0);if(command.pressed)journey_layout(dialog);}
             }
             else if(stock)continue;
@@ -239,6 +243,28 @@ void tick(){
 }
 void __cdecl callback(Ptr view,Ptr object,Ptr name,Ptr args){
     std::string method_name=string(name);
+    if(string(object)=="AionObject" && method_name=="JourneySession"){
+        if(journey_view(view) && array_size(args)==0){
+            auto g=game();if(!g)return;
+            std::array<uint8_t,16> token{};std::memcpy(token.data(),g+0x130c8f0,token.size());
+            bool present=false;for(uint8_t byte:token)present=present||byte!=0;
+            if(!present){
+                std::lock_guard<std::mutex> lock(queue_mutex);
+                auto& state=states[view];if(!state)state=std::make_shared<State>();
+                if(state->active && !state->journey_key_requested && commands.size()<128){
+                    state->journey_key_requested=true;Command command;command.state=state;command.control="journey-key";commands.push_back(std::move(command));
+                }return;
+            }
+            {std::lock_guard<std::mutex> lock(queue_mutex);auto found=states.find(view);if(found!=states.end())found->second->journey_key_requested=false;}
+            const wchar_t* digits=L"0123456789abcdef";
+            std::wstring code=L"window.JourneySessionReady&&window.JourneySessionReady('";
+            for(uint8_t byte:token){code+=digits[byte>>4];code+=digits[byte&15];}
+            code+=L"')";
+            Ptr script=from_wide(code.c_str(),code.size()),frame=from_wide(L"",0);
+            if(script&&frame)execute_js(view,script,frame);
+            if(script)destroy_string(script);if(frame)destroy_string(frame);
+        }return;
+    }
     if(string(object)=="AionObject" && method_name=="JourneyVisibility"){
         if(journey_view(view) && array_size(args)==1){
             int visible=value_integer(array_element(args,0));if(visible!=0 && visible!=1)return;
@@ -284,6 +310,9 @@ void register_methods(Ptr view){
     Ptr journey=from_wide(L"JourneyVisibility",17);
     if(object&&journey)object_callback(view,object,journey);
     if(journey)destroy_string(journey);
+    Ptr session=from_wide(L"JourneySession",14);
+    if(object&&session)object_callback(view,object,session);
+    if(session)destroy_string(session);
     if(object)destroy_string(object);if(preview)destroy_string(preview);if(control)destroy_string(control);if(poll)destroy_string(poll);
 }
 void __cdecl set_js(Ptr view,JSCallback prior){

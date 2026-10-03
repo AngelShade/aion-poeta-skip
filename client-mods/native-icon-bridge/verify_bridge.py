@@ -146,12 +146,12 @@ def main():
             create_object(view,obj);set_object(view,obj,method)
             if attempt==1:set_js(view,prior_js)
             free(obj);free(method)
-            query="typeof AionObject.WardrobePreview + ',' + typeof AionObject.WardrobeControl + ',' + typeof AionObject.WardrobePoll + ',' + typeof AionObject.JourneyVisibility"
+            query="typeof AionObject.WardrobePreview + ',' + typeof AionObject.WardrobeControl + ',' + typeof AionObject.WardrobePoll + ',' + typeof AionObject.JourneyVisibility + ',' + typeof AionObject.JourneySession"
             script=make(query,len(query))
             value=evaluate(view,script,empty);free(script)
             string=text(value);buffer=c.create_string_buffer(128);utf8(string,buffer,len(buffer));free(string);jsfree(value)
-            assert buffer.value==b'function,function,function,function',buffer.value
-            query="AionObject.ItemPreview(100000096); AionObject.WardrobePreview('100000096',0,0,500,500,1); AionObject.WardrobeControl('zoom',1); AionObject.WardrobePoll(); AionObject.JourneyVisibility(1)"
+            assert buffer.value==b'function,function,function,function,function',buffer.value
+            query="AionObject.ItemPreview(100000096); AionObject.WardrobePreview('100000096',0,0,500,500,1); AionObject.WardrobeControl('zoom',1); AionObject.WardrobePoll(); AionObject.JourneyVisibility(1); AionObject.JourneySession()"
             script=make(query,len(query));value=evaluate(view,script,empty);free(script)
             if value:jsfree(value)
             for _ in range(4):update();time.sleep(.05)

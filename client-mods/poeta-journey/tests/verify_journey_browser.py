@@ -21,6 +21,7 @@ def main():
     posts = []
     state_reads = []
     failures = dict(login=0, stall=0)
+    bootstrap_session = '30313233343536373839616263646566'
 
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *unused):
@@ -40,12 +41,18 @@ def main():
             if path == '/journey':
                 html = (media / 'journey.html').read_text(encoding='utf-8')
                 html = html.replace('<head>', '<head><script>window.visibility=[];window.AionObject={JourneyVisibility:function(v){visibility.push(v);}};</script>')
+                if parse_qs(urlparse(self.path).query).get('bootstrap') == ['1']:
+                    # Register after the AionObject stub and before Journey loads.
+                    html = html.replace('</head>', '<script>window.sessionRequests=0;window.AionObject.JourneySession=function(){if(++sessionRequests>=3)setTimeout(function(){JourneySessionReady("'+bootstrap_session+'");},20);};</script></head>')
                 self.send(html, 'text/html; charset=utf-8')
             elif path.startswith('/journey/media/'):
                 file = media / path.rsplit('/', 1)[1]
                 self.send(file.read_bytes(), {'.css':'text/css', '.js':'application/javascript', '.jpg':'image/jpeg'}[file.suffix])
             elif path == '/journey/state':
                 state_reads.append(time.monotonic())
+                if parse_qs(urlparse(self.path).query).get('session_id') not in (['fixture'], [bootstrap_session]):
+                    self.send(json.dumps(dict(error='Log in to choose your journey.')), status=403)
+                    return
                 if failures['login']:
                     failures['login'] -= 1
                     self.send(json.dumps(dict(error='Log in to choose your journey.')), status=403)
@@ -59,7 +66,7 @@ def main():
 
         def do_POST(self):
             form = parse_qs(self.rfile.read(int(self.headers['Content-Length'])).decode())
-            assert form['request'] == ['fixture-only'] and form['session_id'] == ['fixture']
+            assert form['request'] == ['fixture-only'] and form['session_id'] in (['fixture'], [bootstrap_session])
             posts.append(form)
             if form['choice']==['skip']: state.update(eligible=False,prompt=False,decision='SKIP',welcome=True)
             elif form['choice']==['ack']: state.update(welcome=False)
@@ -182,6 +189,25 @@ def main():
             assert posts[-1]['choice'] == ['play'] and js(view, 'visibility.join()') == '1,0'
             print(f'PASS actual Aion WebKit {starter} {width}x{height}: mouse clicks hit visible buttons, class confirmation, map-reload welcome persists until acknowledgement, original-story close')
             destroy(view); views.remove(view)
+        for initial in ('', '&session_id=stale'):
+            state.update(eligible=True, prompt=True, decision='', welcome=False)
+            view = create(1024, 768, False); views.append(view)
+            bootstrap_url = f'http://127.0.0.1:{server.server_port}/journey?bootstrap=1'+initial
+            started = time.monotonic()
+            s = make(bootstrap_url, len(bootstrap_url)); load(view, s, empty, empty, empty); free(s)
+            until = started + 6
+            while time.monotonic() < until:
+                pump(.1)
+                if js(view, 'window.visibility&&visibility.join()') == '1':
+                    break
+            else:
+                raise AssertionError('Journey did not recover a missing/stale native session')
+            assert time.monotonic()-started < 3
+            assert js(view, 'sessionRequests') == '3'
+            before = len(posts);click(view, '#play');pump(.3)
+            assert len(posts)==before+1 and posts[-1]['session_id']==[bootstrap_session]
+            print('PASS actual Aion WebKit native session: '+('stale' if initial else 'missing')+' key recovered without the publisher queue, authenticated choice succeeded')
+            destroy(view);views.remove(view)
         state.update(eligible=True, prompt=True, decision='', welcome=False)
         for failure in ('login', 'stall'):
             failures[failure] = 2 if failure == 'login' else 1

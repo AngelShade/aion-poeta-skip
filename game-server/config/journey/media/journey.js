@@ -1,12 +1,15 @@
 (function(){
 'use strict';
-var state=null,selected='',busy=false,loadStarted=new Date().getTime();
+var state=null,selected='',busy=false,loadStarted=new Date().getTime(),sessionId=queryToken();
 function el(id){return document.getElementById(id);}
 function hidden(id,value){if(value)el(id).setAttribute('hidden','hidden');else el(id).removeAttribute('hidden');}
 function nativeControl(show){if(window.AionObject&&typeof window.AionObject.JourneyVisibility==='function')window.AionObject.JourneyVisibility(show?1:0);}
 function notice(text){el('notice').textContent=text||'';}
 function encode(fields){var parts=[],k;for(k in fields)if(fields.hasOwnProperty(k))parts.push(encodeURIComponent(k)+'='+encodeURIComponent(fields[k]));return parts.join('&');}
-function token(){var m=/(?:[?&])session_id=([^&]*)/.exec(location.search);return m?decodeURIComponent(m[1]):'';}
+function queryToken(){var m=/(?:[?&])session_id=([^&]*)/.exec(location.search);return m?decodeURIComponent(m[1]):'';}
+function token(){return sessionId;}
+window.JourneySessionReady=function(value){if(typeof value==='string'&&/^[a-f0-9]{32}$/.test(value)&&!/^[0]+$/.test(value))sessionId=value;};
+function refreshSession(clear){if(window.AionObject&&typeof window.AionObject.JourneySession==='function'){if(clear)sessionId='';window.AionObject.JourneySession();return true;}return false;}
 function presentation(data){
  var j=data.journey;
  el('starter-title').textContent='Begin in '+j.starter;el('play').textContent='Play '+j.starter;
@@ -33,8 +36,9 @@ function request(method,path,fields,done,timeout){
 function load(){
  var remaining=12000-(new Date().getTime()-loadStarted);
  if(remaining<=0){notice('The journey menu could not connect. Close it and reopen Choose Your Journey.');return;}
+ if(!token()&&refreshSession()){setTimeout(load,100);return;}
  request('GET','/journey/state?session_id='+encodeURIComponent(token()),{},function(status,data){
-  if(status!==200){if(new Date().getTime()-loadStarted<12000){setTimeout(load,300);return;}notice('The journey menu could not connect. Close it and reopen Choose Your Journey.');return;}
+  if(status!==200){if(status===403)refreshSession(true);if(new Date().getTime()-loadStarted<12000){setTimeout(load,300);return;}notice('The journey menu could not connect. Close it and reopen Choose Your Journey.');return;}
   state=data;presentation(data);var j=data.journey;
   if(!data.eligible){hidden('paths',true);hidden('complete',false);el('complete-title').textContent=data.welcome?'Welcome to '+j.capital:'Your journey is underway';el('receipt').textContent=data.decision==='SKIP'?'Your '+j.starter+' skip has already been applied. Collect your skipped quest rewards from the mailbox. Speak to '+j.guide+' for A Ceremony in '+j.capital+'. '+(data.ceremonyRewardsMailed?'Its rewards were already included in your earlier mail bundle.':'Complete the ceremony to earn its rewards.')+' Then see '+j.travelGuide+' for Dispatch to '+j.onward+'.':'This choice is available to starting-class characters in '+j.starter+', before Ascension.';if(data.welcome)nativeControl(true);return;}
   el('greeting').textContent=data.name+', how will your story begin?';

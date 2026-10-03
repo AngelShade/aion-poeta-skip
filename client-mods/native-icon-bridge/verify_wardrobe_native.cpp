@@ -88,6 +88,8 @@ int __cdecl integer(Ptr v){return static_cast<Value*>(v)->number;}
 std::string callback_url="http://127.0.0.1:8091/market/wardrobe?session_id=fixture",callback_script;
 Ptr __cdecl view_url(Ptr){return new std::string(callback_url);}
 void __cdecl execute_js(Ptr,Ptr script,Ptr){callback_script=*static_cast<std::string*>(script);}
+int journey_key_requests=0;
+void __cdecl request_journey_key(){++journey_key_requests;}
 void emit(size_t offset,Ptr function){uint8_t jump[12]={0x48,0xb8};std::memcpy(jump+2,&function,8);jump[10]=0xff;jump[11]=0xe0;std::memcpy(fixture_game+offset,jump,sizeof(jump));}
 Widget make(const char* n,uint32_t type,uint32_t id,wardrobe::Rect rect,uint64_t flags){Widget w;w.name=n;w.type=type;Ptr vt=vtable.data();std::memcpy(w.bytes.data(),&vt,8);wardrobe::field<uint32_t>(w.bytes.data(),0x340)=id;wardrobe::field<wardrobe::Rect>(w.bytes.data(),0x50)=rect;wardrobe::field<uint64_t>(w.bytes.data(),0x30)=flags;return w;}
 int main(int argc,char** argv){
@@ -215,6 +217,28 @@ int main(int argc,char** argv){
  *reinterpret_cast<Ptr*>(fixture_game+0x13875c0+0x212*8)=journey.bytes.data();
  *reinterpret_cast<double*>(fixture_game+0x1378ea8)=1920;*reinterpret_cast<double*>(fixture_game+0x1378eb0)=1080;
  callback_url="http://127.0.0.1:8091/journey?session_id=fixture";
+ std::string sessionMethod="JourneySession";std::vector<Value> sessionArgs;
+ std::memset(fixture_game+0x130c8f0,0,16);callback_script.clear();
+ emit(0x3321c0,reinterpret_cast<Ptr>(request_journey_key));
+ wardrobe::callback(nullptr,&object,&sessionMethod,&sessionArgs);
+ assert(callback_script.empty());
+ wardrobe::callback(nullptr,&object,&sessionMethod,&sessionArgs);
+ assert(journey_key_requests==0);wardrobe::tick();assert(journey_key_requests==1);
+ wardrobe::callback(nullptr,&object,&sessionMethod,&sessionArgs);wardrobe::tick();assert(journey_key_requests==1);
+ for(unsigned i=0;i<16;++i)fixture_game[0x130c8f0+i]=uint8_t(i);
+ wardrobe::callback(nullptr,&object,&sessionMethod,&sessionArgs);
+ assert(callback_script=="window.JourneySessionReady&&window.JourneySessionReady('000102030405060708090a0b0c0d0e0f')");
+ std::memset(fixture_game+0x130c8f0,0,16);
+ std::thread sessionWorker([&]{wardrobe::callback(nullptr,&object,&sessionMethod,&sessionArgs);});sessionWorker.join();
+ assert(journey_key_requests==1);wardrobe::tick();assert(journey_key_requests==2);
+ for(unsigned i=0;i<16;++i)fixture_game[0x130c8f0+i]=uint8_t(i);
+ for(const char* refused:{"https://example.invalid/journey","http://127.0.0.1:8092/journey","http://127.0.0.1:8091/journey-extra","http://127.0.0.1:8091/market"}){
+  callback_url=refused;callback_script.clear();wardrobe::callback(nullptr,&object,&sessionMethod,&sessionArgs);assert(callback_script.empty());
+ }
+ callback_url="http://127.0.0.1:8091/journey";
+ sessionArgs.push_back({"unexpected",0});callback_script.clear();wardrobe::callback(nullptr,&object,&sessionMethod,&sessionArgs);assert(callback_script.empty());
+ callback_url="http://127.0.0.1:8091/journey?session_id=fixture";
+ std::cout<<"PASS: Journey session is unavailable without a key and restricted to the exact local Journey page\n";
  std::string journeyMethod="JourneyVisibility";std::vector<Value> journeyArgs={{"",1}};
  std::thread journeyWorker([&]{wardrobe::callback(nullptr,&object,&journeyMethod,&journeyArgs);});journeyWorker.join();
  assert(!(wardrobe::field<uint64_t>(journey.bytes.data(),0x30)&1));wardrobe::tick();

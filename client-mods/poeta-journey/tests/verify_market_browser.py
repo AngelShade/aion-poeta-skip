@@ -17,6 +17,7 @@ url='http://127.0.0.1:8091/shop'
 urls=[url,'http://127.0.0.1:8091/market','http://127.0.0.1:8091/market/wardrobe','http://127.0.0.1:8091/journey']
 captured=(ctypes.c_uint64*3)()
 captured_url=ctypes.create_string_buffer(256)
+token_requests=ctypes.c_uint32()
 def put(offset,code):ctypes.memmove(base+offset,code,len(code))
 try:
  hook=build_browser_hook_code(urls)
@@ -26,6 +27,7 @@ try:
  # Stub the native pending-token path without issuing a game packet.
  put(0xb544b0,b'\x31\xc0\xc3')
  put(MARKET_AUTH_RVA+len(MARKET_AUTH_ORIGINAL),b'\xb8\x33\0\0\0\xc3')
+ put(NATIVE_REQUEST_TOKEN_RVA,b'\x48\xb8'+struct.pack('<Q',ctypes.addressof(token_requests))+b'\xff\x00\x31\xc0\xc3')
  # Capture direct-navigation ABI arguments; return marker 17.
  capture=Assembler(BROWSER_LOAD_RVA)
  capture.emit(b'\x48\xb8'+struct.pack('<Q',ctypes.addressof(captured))+b'\x48\x89\x08\x48\x89\x50\x08\x4c\x89\x40\x10')
@@ -63,8 +65,14 @@ try:
   assert fn(wrapper,ctypes.create_string_buffer(value.encode()))==34,value
  assert fn(wrapper,None)==34
  journey=ctypes.create_string_buffer(urls[3].encode())
+ put(NATIVE_SECURITY_TOKEN_RVA,bytes(16))
+ assert fn(wrapper,journey)==17, 'Journey must open its local shell without the publisher pending-key queue'
+ assert captured_url.value==urls[3].encode() and token_requests.value==1
+ assert tuple(captured)[:2]==(base+BROWSER_MANAGER_RVA,7)
+ put(NATIVE_SECURITY_TOKEN_RVA,b'0123456789abcdef')
  assert fn(wrapper,journey)==17
  assert captured_url.value==urls[3].encode()+b'?session_id='+b'0123456789abcdef'.hex().encode()
+ assert token_requests.value==1, 'An existing key must not request another one'
  for value in (urls[3]+'x',urls[3]+'?x=1',urls[3][:-1]):
   assert fn(wrapper,ctypes.create_string_buffer(value.encode()))==34,value
  struct.pack_into('<i',native,0x340,-1);assert fn(wrapper,exact)!=17

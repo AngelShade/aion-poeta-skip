@@ -17,6 +17,7 @@ MARKET_AUTH_RVA = 0x4de4a0
 MARKET_AUTH_HOOK_RVA = 0x144d400
 MARKET_AUTH_ORIGINAL = bytes.fromhex('b868210000e806606700482be0')
 NATIVE_SECURITY_TOKEN_RVA = 0x130c8f0
+NATIVE_REQUEST_TOKEN_RVA = 0x3321c0
 PREVIEW_DOCK_RVA = 0x806e29
 PREVIEW_DOCK_HOOK_RVA = 0x144dc00
 PREVIEW_DOCK_ORIGINAL = bytes.fromhex('3d6b0100000f8581000000')
@@ -294,9 +295,27 @@ def build_browser_hook_code(url):
         if not route.startswith('http://127.0.0.1:8091/') or len(payload) > 128 or any(c < 32 for c in payload[:-1]):
             raise ValueError('Embedded navigation supports exact loopback URLs of at most 127 ASCII characters')
         emit_exact_route(asm, 'rdx', 'route_' + str(index), 'next_url_' + str(index))
-        asm.branch(b'\xe9', 'authenticated_load' if route.endswith(('/market', '/wardrobe', '/journey')) else 'load')
+        asm.branch(b'\xe9', 'journey_load' if route.endswith('/journey') else 'authenticated_load' if route.endswith(('/market', '/wardrobe')) else 'load')
         asm.label('next_url_' + str(index))
     asm.branch(b'\xe9', 'original')
+    if any(route.endswith('/journey') for route in urls):
+        # The publisher pending-key queue schedules its navigation callback at
+        # 30 seconds. Journey can load its public shell immediately instead;
+        # the native bridge supplies the key only to that exact local page.
+        asm.label('journey_load')
+        asm.relative(b'\x4c\x8d\x1d', NATIVE_SECURITY_TOKEN_RVA)
+        asm.emit(b'\x49\x8b\x03\x49\x0b\x43\x08')
+        asm.branch(b'\x0f\x85', 'authenticated_load')
+        asm.emit(b'\x48\x8b\x41\x10\x48\x85\xc0')
+        asm.branch(b'\x0f\x84', 'return')
+        asm.emit(b'\x8b\x80\x40\x03\0\0\x85\xc0')
+        asm.branch(b'\x0f\x88', 'return')
+        asm.emit(bytes.fromhex('4883ec38488954242089442428'))
+        asm.relative(b'\xe8', NATIVE_REQUEST_TOKEN_RVA)
+        asm.emit(bytes.fromhex('4c8b4424208b542428'))
+        asm.relative(b'\x48\x8d\x0d', BROWSER_MANAGER_RVA)
+        asm.relative(b'\xe8', BROWSER_LOAD_RVA)
+        asm.emit(bytes.fromhex('4883c438c3'))
     asm.label('authenticated_load')
     asm.emit(b'\x48\x8b\x41\x10\x48\x85\xc0')
     asm.branch(b'\x0f\x84', 'return')
