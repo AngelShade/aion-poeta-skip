@@ -87,7 +87,7 @@ The welcome screen survives map entry and stays until **Enter the world** is cli
 
 ## Verification and rollback
 
-See [validation](docs/VALIDATION.md) for tested behavior and remaining recipient checks. Test Play and Skip on separate new characters of both factions, actual button hit areas at your resolution/UI scale, completed quest history, Leah/Heimdall ceremony steps, rewards/mail, persistent welcome dismissal, relogin, a summoned pet and Additional Functions. A [Discord thread draft](docs/DISCORD_THREAD.md) is included for sharing.
+See [validation](docs/VALIDATION.md) for tested behavior and remaining recipient checks. Test Play and Skip on separate new characters of both factions, actual button hit areas at your resolution/UI scale, completed quest history, Leah/Heimdall ceremony steps, rewards/mail, persistent welcome dismissal, relogin, a summoned pet and Additional Functions.
 
 To restore the client, fully exit Aion and use the exact backup printed by installation:
 
