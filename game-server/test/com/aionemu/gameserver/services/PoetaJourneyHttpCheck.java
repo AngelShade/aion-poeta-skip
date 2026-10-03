@@ -13,8 +13,8 @@ public final class PoetaJourneyHttpCheck {
 		server.start();
 		try (HttpClient client = HttpClient.newHttpClient()) {
 			String base = "http://127.0.0.1:" + server.getAddress().getPort();
-			String[] paths = { "/journey", "/journey/media/journey.css", "/journey/media/journey.js", "/journey/media/poeta.jpg", "/journey/media/sanctum.jpg", "/journey/state", "/journey/media/schema.sql", "/journey/state?session_id=", "/journey/action" };
-			int[] status = { 200, 200, 200, 200, 200, 403, 404, 403, 405 };
+			String[] paths = { "/journey", "/journey/media/journey.css", "/journey/media/journey.js", "/journey/media/poeta.jpg", "/journey/media/sanctum.jpg", "/journey/media/ishalgen.jpg", "/journey/media/pandaemonium.jpg", "/journey/state", "/journey/media/schema.sql", "/journey/state?session_id=", "/journey/action" };
+			int[] status = { 200, 200, 200, 200, 200, 200, 200, 403, 404, 403, 405 };
 			for (int i = 0; i < paths.length; i++) {
 				var response = client.send(HttpRequest.newBuilder(URI.create(base + paths[i])).GET().build(), HttpResponse.BodyHandlers.ofByteArray());
 				if (response.statusCode() != status[i]) throw new AssertionError(paths[i] + ": " + response.statusCode());
@@ -24,7 +24,7 @@ public final class PoetaJourneyHttpCheck {
 			if (wrongHost.statusCode() != 403) throw new AssertionError("Invalid Host was accepted");
 			var unauthenticated = client.send(HttpRequest.newBuilder(URI.create(base + "/journey/action")).POST(HttpRequest.BodyPublishers.ofString("choice=skip&class=GLADIATOR")).build(), HttpResponse.BodyHandlers.discarding());
 			if (unauthenticated.statusCode() != 403) throw new AssertionError("Unauthenticated action was accepted");
-			System.out.println("PASS: 11 isolated HTTP checks: real assets, method/path/Host validation, unauthenticated state and actions refused.");
+			System.out.println("PASS: 13 isolated HTTP checks: both faction assets, method/path/Host validation, unauthenticated state and actions refused.");
 		} finally { server.stop(0); }
 	}
 }

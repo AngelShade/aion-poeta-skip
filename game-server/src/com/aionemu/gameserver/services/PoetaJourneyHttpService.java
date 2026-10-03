@@ -69,7 +69,7 @@ public final class PoetaJourneyHttpService {
 			x.getResponseHeaders().set("X-Content-Type-Options","nosniff");
 			x.getResponseHeaders().set("Referrer-Policy","no-referrer");
 			String path = x.getRequestURI().getPath(), method = x.getRequestMethod();
-			if (method.equals("GET") && (path.equals("/journey") || path.matches("/journey/media/(journey\\.(html|css|js)|poeta\\.jpg|sanctum\\.jpg)"))) {
+			if (method.equals("GET") && (path.equals("/journey") || path.matches("/journey/media/(journey\\.(html|css|js)|(poeta|sanctum|ishalgen|pandaemonium)\\.jpg)"))) {
 				String file = path.equals("/journey") ? "journey.html" : path.substring(path.lastIndexOf('/')+1);
 				send(x,200,file.endsWith(".jpg") ? "image/jpeg" : file.endsWith(".css") ? "text/css" : file.endsWith(".js") ? "application/javascript" : "text/html",Files.readAllBytes(MEDIA.resolve(file))); return;
 			}

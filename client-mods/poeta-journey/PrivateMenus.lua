@@ -10,7 +10,7 @@ function PrivateJourney_OnEvent(this, event, ...)
     if event == "PLAYER_ENTERING_WORLD" then
         PrivateJourney:Hide();
         -- A hidden, authenticated state request shows the choice only for an
-        -- eligible character who has not already chosen to play Poeta.
+        -- eligible character who has not already chosen to play their original story.
         PrivateJourneyBrowser:LoadUrlWithWebAuth(PRIVATE_JOURNEY_URL);
     end
 end

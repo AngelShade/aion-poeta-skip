@@ -46,7 +46,7 @@ def main():
         raise ValueError('--java must name your JDK 25 bin/java.exe file.')
     media_output = output.parent / (output.name + '-server-media')
     if media_output.exists(): raise ValueError('Use a new output name; generated server media already exists.')
-    for name in ('loading_lf1.dds','loading_lc1.dds'):
+    for name in ('loading_lf1.dds','loading_lc1.dds','loading_df1.dds','loading_dc1.dds'):
         if not (root/'Textures/loading'/name).is_file(): raise ValueError('Original loading artwork is missing: '+name)
     mod = Path(__file__).resolve().parent
     settings = json.loads((mod / 'menus.json').read_text(encoding='utf-8-sig'))
@@ -102,7 +102,7 @@ def main():
     manifest['preservedFiles'] = [dict(path=p, sha256=digest(root/p)) for p in ['Data/Items/Items.pak','Data/ui/game/game.pak','L10N/enu/data/data.pak']]
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     media_output.mkdir()
-    for source,name in [('loading_lf1.dds','poeta.jpg'),('loading_lc1.dds','sanctum.jpg')]:
+    for source,name in [('loading_lf1.dds','poeta.jpg'),('loading_lc1.dds','sanctum.jpg'),('loading_df1.dds','ishalgen.jpg'),('loading_dc1.dds','pandaemonium.jpg')]:
         with Image.open(root/'Textures/loading'/source) as img:
             img.convert('RGB').save(media_output/name,quality=92)
     print('Copy generated artwork to active server config/journey/media:',media_output)

@@ -1,8 +1,13 @@
-# Aion 4.8 Poeta Skip
+# Aion 4.8 Poeta & Ishalgen Skip
 
-An optional full-screen journey choice for the English Aion 4.8 NA 64-bit client and Beyond Aion emulator. Choose **Play Poeta** to keep the original story, or **Ascend to Sanctum** to choose an advanced class, start at level 10, complete the eligible Poeta quests and receive their items through mail.
+An optional full-screen journey choice for the English Aion 4.8 NA 64-bit client and Beyond Aion emulator. Both **Elyos and Asmodians** are supported. Choose **Play Poeta / Play Ishalgen** to keep your original story, or **Ascend to Sanctum / Ascend to Pandaemonium** to choose an advanced class, start at level 10, complete your eligible starter quests and receive their items through mail.
 
-The Sanctum ceremony stays playable: the skip passes Pernos and starts **A Ceremony in Sanctum** with **Leah**. Ceremony rewards are earned normally at its final turn-in. **Dispatch to Verteron** also starts for the chosen class. Existing completed quests never award another bundle.
+Both capital ceremonies stay playable and grant their rewards normally at final turn-in. The skip bypasses Pernos or Munin and starts the appropriate ceremony at its first capital step. Existing completed quests never award another bundle.
+
+| Faction | Starter quests completed | Capital ceremony begins with | Onward quest |
+| --- | --- | --- | --- |
+| Elyos | 41 Poeta/Ascension quests | Leah in Sanctum | Dispatch to Verteron, via Polyidus |
+| Asmodians | 47 Ishalgen/Ascension quests | Heimdall in Pandaemonium | Dispatch to Altgard, via Doman |
 
 ## Download
 
@@ -35,7 +40,7 @@ python client-mods/poeta-journey/build_package.py --client-path 'D:\Games\Aion 4
 Choose the **game root containing bin64, Data, L10N and Plugin**, not bin64 itself. The output must be a new directory outside the client. Preparation leaves the client untouched and creates:
 
 - `D:\Poeta-Staged`: ten hash-checked client replacements and `manifest.json`.
-- `D:\Poeta-Staged-server-media`: `poeta.jpg` and `sanctum.jpg`, generated from `Textures/loading/loading_lf1.dds` and `loading_lc1.dds` in your client.
+- `D:\Poeta-Staged-server-media`: `poeta.jpg`, `sanctum.jpg`, `ishalgen.jpg` and `pandaemonium.jpg`, generated from your client's `Textures/loading/loading_lf1.dds`, `loading_lc1.dds`, `loading_df1.dds` and `loading_dc1.dds`.
 
 Review the manifest. Fully exit Aion before installing:
 
@@ -55,8 +60,8 @@ The installer verifies original and staged hashes, backs up every replacement an
 
 2. Back up the database and your current server JAR/configuration. Build your own JAR instead of copying a private server's compiled binary.
 3. Log players out and stop GameServer normally so its save completes. Replace `libs/game-server-4.8-SNAPSHOT.jar` in the **active GameServer deployment** with `game-server/target/game-server-4.8-SNAPSHOT.jar`.
-4. Copy `game-server/config/journey` to the active server's `config/journey`. Copy the two generated JPG files from `Poeta-Staged-server-media` into its `config/journey/media`.
-5. Deploy the modified `game-server/data/handlers/quest/poeta/_1000Prologue.java` into the matching active `data/handlers/quest/poeta` folder. Deploy the matching server data/configuration when building a fresh server. Customized emulators should merge the listed integration changes, preserving their own unrelated work.
+4. Copy `game-server/config/journey` to the active server's `config/journey`. Copy all four generated JPG files from `Poeta-Staged-server-media` into its `config/journey/media`.
+5. Deploy both modified prologue handlers: `game-server/data/handlers/quest/poeta/_1000Prologue.java` and `game-server/data/handlers/quest/ishalgen/_2000Prologue.java` into the matching active handler folders. Deploy the matching server data/configuration when building a fresh server. Customized emulators should merge the listed integration changes, preserving their own unrelated work.
 6. Add these overrides to the active `config/mygs.properties`:
 
    ```properties
@@ -64,21 +69,25 @@ The installer verifies original and staged hashes, backs up every replacement an
    gameserver.simple.secondclass.enable = false
    ```
 
-7. Start GameServer and check **Poeta journey ready: 41 quests** and **Poeta journey listening at http://127.0.0.1:8091/journey**. Start the matching modified 64-bit client and log in.
+7. Start GameServer and check **Starter journey ready: 41 Poeta quests, 47 Ishalgen quests** and **Poeta journey listening at http://127.0.0.1:8091/journey**. Start the matching modified 64-bit client and log in.
 
 The feature defaults to disabled until the operator installs both parts. Startup creates its InnoDB decision table and validates the persistence tables and reward templates. An unauthenticated `/journey/state` returning **403** is expected.
 
+## Updating the earlier Elyos-only version
+
+Replace the built server JAR through the normal stop/save path, deploy both prologue handlers and updated `config/journey/media` HTML/JS, and add `ishalgen.jpg` and `pandaemonium.jpg` from a newly prepared package. An already installed matching Journey client uses the same native browser hooks and does not need another DLL install for faction support. Preserve the existing `poeta_journey` table and receipts.
+
 ## Player behavior
 
-New Elyos starting-class characters in Poeta, level 1-9, receive the automatic choice. Play saves their preference and starts the original prologue. Skip requires a compatible advanced class and explicit final confirmation while standing safely. It completes 41 eligible Poeta/Ascension quests, mails all fixed and alternative item rewards for the skipped quests, includes quest Kinah, titles and quest cube expansion, and binds/teleports to Sanctum.
+New Elyos characters in Poeta and Asmodian characters in Ishalgen, starting class and level 1-9, receive the automatic choice. Play saves their preference and starts the original prologue. Skip requires a compatible advanced class and explicit final confirmation while standing safely. It completes the 41 eligible Poeta/Ascension quests or 47 eligible Ishalgen/Ascension quests for that faction, mails all fixed and alternative item rewards, includes quest Kinah, titles and quest cube expansion, and binds/teleports to the matching capital. Other-faction quests and rewards are never included.
 
 The reward bundle includes other class alternatives; identical alternatives within one quest are awarded once. The skip grants level 10 rather than adding scaled XP for each quest. Restricted, event, unused and repeatable quests are excluded. Previously ascended or transferred characters cannot claim the skip. A full mailbox rejects the whole transaction, and repeated requests cannot duplicate rewards.
 
-The welcome screen survives map entry and stays until **Enter the world** is clicked. Reopen through **Additional Functions > Choose Your Journey** or `/journey`. Complete the ceremony in Sanctum and continue to Verteron through Polyidus. Legacy receipts that already mailed ceremony rewards retain their protection against receiving them twice.
+The welcome screen survives map entry and stays until **Enter the world** is clicked. Reopen through **Additional Functions > Choose Your Journey** or `/journey`. Elyos complete the ceremony with Leah and continue to Verteron through Polyidus. Asmodians begin their ceremony with Heimdall and continue to Altgard through Doman. Legacy receipts that already mailed ceremony rewards retain their protection against receiving them twice.
 
 ## Verification and rollback
 
-See [validation](docs/VALIDATION.md) for tested behavior and remaining recipient checks. Test Play and Skip on separate new Elyos characters, actual button hit areas at your resolution/UI scale, completed quest history, Leah's ceremony step, rewards/mail, persistent welcome dismissal, relogin, a summoned pet and Additional Functions.
+See [validation](docs/VALIDATION.md) for tested behavior and remaining recipient checks. Test Play and Skip on separate new characters of both factions, actual button hit areas at your resolution/UI scale, completed quest history, Leah/Heimdall ceremony steps, rewards/mail, persistent welcome dismissal, relogin, a summoned pet and Additional Functions. A [Discord thread draft](docs/DISCORD_THREAD.md) is included for sharing.
 
 To restore the client, fully exit Aion and use the exact backup printed by installation:
 
@@ -86,4 +95,4 @@ To restore the client, fully exit Aion and use the exact backup printed by insta
 ./client-mods/poeta-journey/Restore.ps1 -ClientPath 'D:\Games\Aion 4.8 NA' -BackupPath 'D:\Games\Aion 4.8 NA\TransmogMenu-backups\signed-DATE-ID'
 ```
 
-To disable the server feature, set `gameserver.poeta.journey.enable = false` and restart normally. Keep `poeta_journey`: its receipts prevent duplicate claims. Restoring client files or disabling the feature does not reverse awarded levels, quests, items or mail. Restoring a database snapshot reverses subsequent gameplay too; use a consistent backup and reconcile rewards first.
+To disable the server feature, set `gameserver.poeta.journey.enable = false` and restart normally. Keep `poeta_journey`: this table name is retained for compatibility and its receipts protect both factions from duplicate claims. Restoring client files or disabling the feature does not reverse awarded levels, quests, items or mail. Restoring a database snapshot reverses subsequent gameplay too; use a consistent backup and reconcile rewards first.

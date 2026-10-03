@@ -5,6 +5,7 @@ import java.util.*;
 import javax.xml.bind.JAXBContext;
 import com.aionemu.gameserver.dataholders.QuestsData;
 import com.aionemu.gameserver.model.PlayerClass;
+import com.aionemu.gameserver.model.Race;
 import com.aionemu.gameserver.model.templates.QuestTemplate;
 
 /** Uses the actual quest XML, without loading a server or modifying a character. */
@@ -12,7 +13,7 @@ public final class PoetaJourneyRulesCheck {
 	private static void check(boolean pass,String label) { if (!pass) throw new AssertionError(label); }
 	public static void main(String[] args) throws Exception {
 		QuestsData data = (QuestsData) JAXBContext.newInstance(QuestsData.class).createUnmarshaller().unmarshal(Path.of(args[0]).toFile());
-		List<QuestTemplate> skipped = data.getQuestTemplates().stream().filter(PoetaJourneyRules::skippedQuest).toList();
+		List<QuestTemplate> skipped = data.getQuestTemplates().stream().filter(q -> PoetaJourneyRules.skippedQuest(q,Race.ELYOS)).toList();
 		Set<Integer> expected = new TreeSet<>();
 		for (int id=1000;id<=1006;id++) expected.add(id);
 		for (int id=1100;id<=1129;id++) if (id != 1128) expected.add(id);
@@ -42,6 +43,38 @@ public final class PoetaJourneyRulesCheck {
 			}
 		}
 		check(classes == 11,"all eleven advanced classes supported");
-		System.out.println("PASS: " + skipped.size() + " skipped quests; Sanctum ceremony rewards deferred; every reward branch and class choice; six onward dispatches.");
+		List<QuestTemplate> asmodian = data.getQuestTemplates().stream().filter(q -> PoetaJourneyRules.skippedQuest(q,Race.ASMODIANS)).toList();
+		Set<Integer> asmodianExpected=new TreeSet<>();
+		for(int id=2000;id<=2008;id++) asmodianExpected.add(id);
+		for(int id=2100;id<=2137;id++) if(id!=2111 && id!=2130) asmodianExpected.add(id);
+		asmodianExpected.addAll(List.of(2150,2151));
+		Set<Integer> asmodianActual=new TreeSet<>(); for(QuestTemplate q:asmodian) asmodianActual.add(q.getId());
+		check(asmodianActual.equals(asmodianExpected),"complete legitimate Ishalgen roster: "+asmodianActual);
+		check(!asmodianActual.contains(2009) && !asmodianActual.contains(80619),"Pandaemonium ceremony and event excluded from early mail");
+		Map<Integer,Long> asmodianMail=new HashMap<>();
+		for(QuestTemplate q:asmodian) PoetaJourneyRules.rewardItems(q).forEach((id,count)->asmodianMail.merge(id,count,Long::sum));
+		check(!asmodianMail.containsKey(100000640) && !asmodianMail.containsKey(100200605),"Asmodian ceremony weapons are not mailed early");
+		for(Race race:List.of(Race.ELYOS,Race.ASMODIANS)) {
+			var path=PoetaJourneyRules.journey(race);
+			var finishedField=com.aionemu.gameserver.model.templates.quest.XMLStartCondition.class.getDeclaredField("finished");
+			finishedField.setAccessible(true);
+			for(PlayerClass advanced:PlayerClass.values()) if(!advanced.isStartingClass()) {
+				var dispatch=data.getQuestById(PoetaJourneyRules.dispatchQuest(race,advanced));
+				check(dispatch!=null && dispatch.getRacePermitted()==race,"correct faction dispatch for "+race+" "+advanced);
+				boolean follows=false;
+				for(var condition:dispatch.getXMLStartConditions()) {
+					var finished=(List<?>)finishedField.get(condition);
+					if(finished!=null) for(Object value:finished) {
+						var f=(com.aionemu.gameserver.model.templates.quest.FinishedQuestCond)value;
+						if(f.getQuestId()==path.ceremony() && f.getReward()==PoetaJourneyRules.ceremonyGroup(advanced)) follows=true;
+					}
+				}
+				check(follows,"dispatch follows correct ceremony/class reward group");
+				check(data.getQuestById(path.ceremony()).getSelectableRewardByClass(advanced).size()>0,"normal ceremony reward for "+race+" "+advanced);
+			}
+			check(path.welcome().contains(path.guide()) && path.welcome().contains(path.onward()),"faction-specific welcome guidance");
+		}
+		check(Collections.disjoint(actual,asmodianActual),"faction quest rosters never overlap");
+		System.out.println("PASS: 41 Poeta and 47 Ishalgen quests; both ceremony rewards deferred; eleven advanced classes and six dispatches per faction; no cross-faction quests.");
 	}
 }

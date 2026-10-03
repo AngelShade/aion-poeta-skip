@@ -50,7 +50,7 @@ def main():
             posts.append(form)
             if form['choice']==['skip']: state.update(eligible=False,prompt=False,decision='SKIP',welcome=True)
             elif form['choice']==['ack']: state.update(welcome=False)
-            self.send(json.dumps(dict(state, done=True, notice='41 quests completed; skipped rewards mailed; complete A Ceremony in Sanctum to earn its rewards.')))
+            self.send(json.dumps(dict(state, done=True, notice=str(state['quests'])+' quests completed; skipped rewards mailed; complete A Ceremony in '+state['journey']['capital']+' to earn its rewards.')))
 
     server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -111,8 +111,8 @@ def main():
         mouse_move(view,*point);pump(.05);mouse_down(view,0);mouse_up(view,0);pump(.1)
 
     try:
-        for width, height in [(1024, 768), (1920, 1080), (3440, 1440)]:
-            state.update(eligible=True,prompt=True,decision='',welcome=False)
+        for starter, capital, guide, travel_guide, onward, count, width, height in [(*path,w,h) for path in [('Poeta','Sanctum','Leah','Polyidus','Verteron',41),('Ishalgen','Pandaemonium','Heimdall','Doman','Altgard',47)] for w,h in [(1024,768),(1920,1080),(3440,1440)]]:
+            state.update(eligible=True,prompt=True,decision='',welcome=False,quests=count,journey=dict(starter=starter,capital=capital,guide=guide,travelGuide=travel_guide,onward=onward,starterArt=starter.lower(),capitalArt=capital.lower(),description='Discover the story of your Ascension.'))
             view = create(width, height, False)
             views.append(view)
             url = f'http://127.0.0.1:{server.server_port}/journey?session_id=fixture'
@@ -124,9 +124,13 @@ def main():
                     break
             else:
                 raise AssertionError('Journey did not automatically open for eligible character')
+            assert js(view, "document.getElementById('play').textContent") == 'Play '+starter
+            assert js(view, "document.getElementById('capital-title').textContent") == 'Ascend to '+capital
+            assert starter.lower()+'.jpg' in js(view, "document.getElementById('starter-art').style.backgroundImage")
+            assert capital.lower()+'.jpg' in js(view, "document.getElementById('capital-art').style.backgroundImage")
             geometry = json.loads(js(view, "(function(){var names=['play','skip'],a=[];for(var i=0;i<names.length;i++){var r=document.getElementById(names[i]).getBoundingClientRect();a.push({left:r.left,top:r.top,right:r.right,bottom:r.bottom});}return JSON.stringify(a);}())"))
             assert all(r['left'] >= 0 and r['top'] >= 0 and r['right'] <= width and r['bottom'] <= height for r in geometry), geometry
-            filename = str(Path(__file__).resolve().parents[3] / f'target/journey-{width}x{height}.png')
+            filename = str(Path(__file__).resolve().parents[3] / f'target/journey-{starter.lower()}-{width}x{height}.png')
             Path(filename).parent.mkdir(parents=True, exist_ok=True)
             buffer = render(view)
             assert buffer and buffer_width(buffer) == width and buffer_height(buffer) == height
@@ -143,12 +147,14 @@ def main():
             click(view,'#confirm')
             pump(.5)
             assert len(posts) == before + 1 and posts[-1]['class'] == ['GLADIATOR'] and posts[-1]['choice'] == ['skip'], posts
-            assert js(view, "document.getElementById('complete-title').textContent") == 'Welcome to Sanctum'
+            assert js(view, "document.getElementById('complete-title').textContent") == 'Welcome to '+capital
             # Map entry reloads the hidden webview. The durable receipt opens it
             # again and remains pending until a click explicitly acknowledges it.
             s=make(url,len(url));load(view,s,empty,empty,empty);free(s);pump(.7)
             assert js(view,'visibility.join()')=='1', 'Welcome lost on map-change reload'
-            assert js(view,"document.getElementById('complete-title').textContent")=='Welcome to Sanctum'
+            assert js(view,"document.getElementById('complete-title').textContent")=='Welcome to '+capital
+            assert guide in js(view,"document.getElementById('receipt').textContent")
+            assert onward in js(view,"document.getElementById('receipt').textContent")
             assert 'Complete the ceremony to earn its rewards.' in js(view,"document.getElementById('receipt').textContent")
             pump(.7)
             assert state['welcome'] and js(view,'visibility.join()')=='1'
@@ -161,7 +167,7 @@ def main():
             click(view,'#play')
             pump(.5)
             assert posts[-1]['choice'] == ['play'] and js(view, 'visibility.join()') == '1,0'
-            print(f'PASS actual Aion WebKit {width}x{height}: mouse clicks hit visible buttons, class confirmation, map-reload welcome persists until acknowledgement, original-story close')
+            print(f'PASS actual Aion WebKit {starter} {width}x{height}: mouse clicks hit visible buttons, class confirmation, map-reload welcome persists until acknowledgement, original-story close')
             destroy(view); views.remove(view)
         state.update(eligible=False, prompt=False, decision='SKIP',welcome=False)
         view = create(1024, 768, False); views.append(view)
