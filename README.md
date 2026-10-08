@@ -1,5 +1,9 @@
 # Aion 4.8 Poeta & Ishalgen Skip
 
+## Install with the other published Aetherfall mods
+
+This mod is included in the [combined Season Pass release](https://github.com/AngelShade/aion-season-pass). Its [shared installation guide](https://github.com/AngelShade/aion-season-pass/blob/main/docs/SHARED_MODS.md) combines **Season Pass, Central Market, Wardrobe, Skip Poeta/Ishalgen Journey and Inventory/Warehouse Expansion** in one native client package and one server listener. Use that profile when installing these mods together; do not layer the separate standalone installers. Recorded standalone installations can be upgraded using a separate original client copy. Offline integration checks are distinct from actual gameplay acceptance.
+
 An optional full-screen journey choice for the English Aion 4.8 NA 64-bit client and Beyond Aion emulator. Both **Elyos and Asmodians** are supported. Choose **Play Poeta / Play Ishalgen** to keep your original story, or **Ascend to Sanctum / Ascend to Pandaemonium** to choose an advanced class, start at level 10, complete your eligible starter quests and receive their items through mail.
 
 Both capital ceremonies stay playable and grant their rewards normally at final turn-in. The skip bypasses Pernos or Munin and starts the appropriate ceremony at its first capital step. Existing completed quests never award another bundle.
